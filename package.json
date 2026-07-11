@@ -1,0 +1,14 @@
+{
+  "name": "gif-library",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:api": "npm run dev -w apps/api",
+    "dev:admin": "npm run dev -w apps/admin",
+    "infra:up": "docker compose up -d",
+    "infra:down": "docker compose down"
+  }
+}

@@ -1,0 +1,19 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Gif {
+  id         String   @id @default(uuid())
+  storageKey String // path in the bucket — needed for deletion later
+  url        String // public URL served to the mobile app
+  tags       String[]
+  createdAt  DateTime @default(now())
+  isActive   Boolean  @default(true) // soft delete: flip this, clean up later
+
+  @@index([isActive])
+}
