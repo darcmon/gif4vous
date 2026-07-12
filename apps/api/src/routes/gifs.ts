@@ -1,5 +1,5 @@
-import { Router } from "express";
-import { siphonRequestSchema } from "@gif-library/shared";
+import { Router } from 'express';
+import { siphonRequestSchema } from '@gif-library/shared';
 
 /**
  * Build order (matches the README task list):
@@ -36,7 +36,9 @@ import { siphonRequestSchema } from "@gif-library/shared";
  *   object cleanup becomes a batch job later (or a hard-delete route that
  *   does DB first, then removeObject, logging storage failures).
  */
-export const gifsRouter = Router();
+export const publicRouter = Router();
+export const adminRouter = Router();
+adminRouter.get('/ping', (_req, res) => res.json({ ok: true }));
 
 // TODO(you): the routes. Reference the schema import above so the shared
 // workspace wiring is proven the moment this file compiles.

@@ -1,19 +1,27 @@
-import type { RequestHandler } from "express";
-import { env } from "../config/env.js";
+import type { RequestHandler } from 'express';
+import { createHash, timingSafeEqual } from 'node:crypto';
+import { env } from '../config/env.js';
 
-/**
- * TODO(you): bearer-token auth middleware.
- *   - Read the Authorization header. With noUncheckedIndexedAccess on,
- *     req.headers.authorization is `string | undefined` — handle it.
- *   - Expect exactly `Bearer ${env.ADMIN_TOKEN}`.
- *   - On mismatch: res.status(401).json({ error: "Unauthorized" }); return;
- *   - On success: next().
- *
- * Typing note: annotate as RequestHandler and let TS infer req/res/next.
- * Once done, mount it on the admin router ONLY — the mobile app's
- * GET /api/gifs/random stays public.
- */
 export const requireAdmin: RequestHandler = (req, res, next) => {
-  // TODO(you)
-  res.status(501).json({ error: "auth not implemented" });
+  const header = req.headers.authorization;
+
+  function safeEqual(a: string, b: string): boolean {
+    const ha = createHash('sha256').update(a).digest();
+    const hb = createHash('sha256').update(b).digest();
+    return timingSafeEqual(ha, hb);
+  }
+
+  if (!header || !header.startsWith('Bearer ')) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  const token = header.slice('Bearer '.length);
+
+  if (!safeEqual(token, env.ADMIN_TOKEN)) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
+  next();
 };

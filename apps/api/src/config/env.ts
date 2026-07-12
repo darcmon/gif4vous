@@ -3,18 +3,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
+dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 import { z } from 'zod';
 
-/**
- * WORKED EXAMPLE — study this one, you'll reuse the pattern everywhere.
- *
- * Validate process.env ONCE at boot. If a variable is missing or malformed
- * the app crashes immediately with a readable message, instead of failing
- * mysteriously on the first request 20 minutes into a debugging session.
- * After this file, nothing else in the codebase touches process.env.
- */
 const envSchema = z.object({
   NODE_ENV: z
     .enum(['development', 'production', 'test'])
