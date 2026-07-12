@@ -1,6 +1,6 @@
-import { promises as dns } from "node:dns";
-import { isIP } from "node:net";
-import type { Result } from "./storage.js";
+import { promises as dns } from 'node:dns';
+import { isIP } from 'node:net';
+import type { Result } from './storage.js';
 
 /**
  * EXERCISE: the SSRF guard. Your server fetches user-supplied URLs, so it
@@ -29,6 +29,29 @@ import type { Result } from "./storage.js";
  *   https://192.168.1.1/x.gif
  */
 export async function assertSafeUrl(raw: string): Promise<Result<URL>> {
-  // TODO(you)
-  return { ok: false, error: "not implemented" };
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return { ok: false, error: 'Malformed URL' };
+  }
+
+  if (url.protocol !== 'https:') {
+    return { ok: false, error: 'Only https URLs are allowed' };
+  }
+
+  function isPrivateIPv4(ip: string): boolean {
+    const parts = ip.split('.').map(Number);
+    if (parts.length !== 4) return true;
+
+    const [a, b] = parts;
+    if (a === undefined || b === undefined) return true;
+
+    if (a === 10) return true;
+    if (a === 172 && b >= 16) return true;
+
+    return false;
+  }
+
+  return { ok: false, error: 'not implemented' };
 }
