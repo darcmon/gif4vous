@@ -9,7 +9,7 @@ datasource db {
 
 model Gif {
   id         String   @id @default(uuid())
-  storageKey String // path in the bucket — needed for deletion later
+  storageKey String   @unique // path in the bucket — needed for deletion later
   url        String // public URL served to the mobile app
   tags       String[]
   createdAt  DateTime @default(now())

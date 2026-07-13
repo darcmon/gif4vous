@@ -1,13 +1,23 @@
-import type { ErrorRequestHandler } from "express";
+import type {
+  ErrorRequestHandler,
+  NextFunction,
+  Request,
+  RequestHandler,
+  Response,
+} from 'express';
 
+type AsyncHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<unknown>;
+
+export function asyncHandler(fn: AsyncHandler): RequestHandler {
+  return (req, res, next) => {
+    fn(req, res, next).catch(next);
+  };
+}
 /**
- * EXERCISE: centralized error handling.
- *
- * TODO(you) #1: an AppError class extending Error with a `statusCode` field
- * and a constructor(message: string, statusCode = 500). Routes throw
- * `new AppError("No GIFs in library", 404)` instead of juggling res.status
- * everywhere.
- *
  * TODO(you) #2: implement the handler below.
  *   - If err instanceof AppError -> use its statusCode + message.
  *   - Otherwise -> log the full error server-side, respond 500 with a
@@ -22,10 +32,20 @@ import type { ErrorRequestHandler } from "express";
  */
 
 export class AppError extends Error {
-  // TODO(you)
+  constructor(
+    message: string,
+    public readonly statusCode: number = 500,
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
 }
 
 export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
-  // TODO(you)
-  res.status(500).json({ error: "Internal server error" });
+  if (err instanceof AppError) {
+    res.status(err.statusCode).json({ error: err.message });
+    return;
+  }
+  console.error('Unhandled error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 };
