@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 /**
  * =========================================================================
@@ -13,23 +13,31 @@ import { z } from "zod";
 // Pattern to internalize: define the schema, then DERIVE the type from it
 // with z.infer. Never hand-write an interface that duplicates a schema.
 export const siphonRequestSchema = z.object({
-  sourceUrl: z.string().url().startsWith("https://", {
-    message: "Only https sources are allowed",
+  sourceUrl: z.string().url().startsWith('https://', {
+    message: 'Only https sources are allowed',
   }),
   tags: z.array(z.string().min(1).max(32)).max(10).default([]),
 });
 
 export type SiphonRequest = z.infer<typeof siphonRequestSchema>;
 
-// ---- YOUR TURN -----------------------------------------------------------
-// TODO(you) #1: Define `gifSchema` — the shape of a Gif the API returns:
-//   id (uuid string), url (string url), tags (string array),
-//   isActive (boolean), createdAt (coerce to Date: z.coerce.date()).
-//   Then export `export type Gif = z.infer<typeof gifSchema>;`
-//
-// TODO(you) #2: Define `listGifsResponseSchema` — paginated response:
-//   { items: Gif[], nextCursor: string | null }
-//   Hint: z.string().nullable() vs .optional() — know the difference.
+export const gifSchema = z.object({
+  id: z.string().uuid(),
+  url: z.string().url(),
+  tags: z.array(z.string()),
+  isActive: z.boolean(),
+  createdAt: z.coerce.date(),
+});
+
+export type Gif = z.infer<typeof gifSchema>;
+
+export const listGifsResponseSchema = z.object({
+  items: z.array(gifSchema),
+  nextCursor: z.string().nullable(),
+});
+
+export type ListGifsResponse = z.infer<typeof listGifsResponseSchema>;
+
 //
 // TODO(you) #3: Define `randomGifResponseSchema` — { url: string }.
 //   Trivial on purpose: the frontend will call .parse() on fetch results,

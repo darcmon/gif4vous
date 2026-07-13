@@ -1,13 +1,13 @@
 import axios from 'axios';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma.js';
 import { Router } from 'express';
 import { asyncHandler, AppError } from '../middleware/error.js';
-import { siphonRequestSchema } from '@gif-library/shared';
+import { siphonRequestSchema, Gif } from '@gif-library/shared';
 import { assertSafeUrl } from '../lib/url-guard.js';
 import { detectImageType } from '../lib/detect-image-type.js';
 import { createHash } from 'crypto';
 import { removeObject, uploadBuffer } from '../lib/storage.js';
-import { Gif } from '@prisma/client';
 
 /**
  * Build order (matches the README task list):
@@ -50,16 +50,49 @@ export const adminRouter = Router();
 
 publicRouter.get(
   '/gifs/random',
-  asyncHandler(async (req, res) => {
+  asyncHandler(async (_req, res) => {
     const rows = await prisma.$queryRaw<Array<Pick<Gif, 'id' | 'url'>>>`
   SELECT id, url FROM "Gif" WHERE "isActive" = true ORDER BY RANDOM() LIMIT 1
 `;
+    const gif = rows[0];
+
+    if (!gif) throw new AppError('No GIFs in library', 404);
+    res.json({ url: gif.url });
   }),
 );
 
 adminRouter.get('/ping', (_req, res) => res.json({ ok: true }));
 
-adminRouter.get('/admin/gifs');
+const listQuerySchema = z.object({
+  cursor: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(50).default(20),
+});
+
+adminRouter.get(
+  '/gifs',
+  asyncHandler(async (req, res) => {
+    const parsed = listQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      res.status(400).json({ errors: parsed.error.flatten().fieldErrors });
+      return;
+    }
+
+    const { cursor, limit } = parsed.data;
+
+    const gifs = await prisma.gif.findMany({
+      where: { isActive: true },
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      ...(cursor && { cursor: { id: cursor }, skip: 1 }),
+    });
+
+    const hasMore = gifs.length > limit;
+    if (hasMore) gifs.pop();
+
+    const nextCursor = hasMore ? (gifs[gifs.length - 1]?.id ?? null) : null;
+    res.json({ items: gifs, nextCursor });
+  }),
+);
 
 adminRouter.post(
   '/siphon',
@@ -122,6 +155,26 @@ adminRouter.post(
     }
 
     res.status(201).json({ gif });
+  }),
+);
+
+adminRouter.delete(
+  '/gifs/:id',
+  asyncHandler(async (req, res) => {
+    const { id } = req.params;
+    if (!id) {
+      throw new AppError('Missing id', 400);
+    }
+
+    try {
+      await prisma.gif.update({
+        where: { id },
+        data: { isActive: false },
+      });
+    } catch {
+      throw new AppError('Gif not found', 404);
+    }
+    res.status(204).send();
   }),
 );
 
