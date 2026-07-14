@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { API_BASE, authHeaders } from "../api";
+import { useEffect, useState } from 'react';
+import { API_BASE, authHeaders } from '../api';
 
 type Gif = {
   id: string;
@@ -26,7 +26,7 @@ export function Library() {
           return;
         }
         const data = await res.json();
-        setGifs(data.gifs);
+        setGifs(data.items);
         setError(null);
         setLoading(false);
       } catch (err) {
@@ -35,11 +35,11 @@ export function Library() {
       }
     }
     load();
-  });
+  }, []);
 
   if (loading) return <p className="muted">Loading the collection…</p>;
   if (error) return <p className="error">Error: {error}</p>;
-  if (gifs.length === 0)
+  if (!gifs || gifs.length === 0)
     return <p className="muted">Nothing here yet — go hunting.</p>;
 
   return (
@@ -48,7 +48,7 @@ export function Library() {
         <figure key={gif.id} className="card">
           <img src={gif.url} alt="" loading="lazy" />
           <figcaption>
-            {gif.tags.length > 0 ? gif.tags.join(", ") : "untagged"}
+            {gif.tags.length > 0 ? gif.tags.join(', ') : 'untagged'}
           </figcaption>
         </figure>
       ))}

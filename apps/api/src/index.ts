@@ -11,7 +11,7 @@ app.use(express.json());
 app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use(
   cors({
-    origin: 'http://locahost:5173',
+    origin: 'http://localhost:5173',
     methods: ['GET', 'POST', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   }),
